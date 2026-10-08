@@ -28,3 +28,9 @@ Start → Move → Collect → Score → Collision → Lose Life → Game Over �
 10. On a phone/touch device, verify the canvas accepts touch/start (full virtual controls are intentionally not added yet).
 
 The website design is intentionally not redesigned in this stage.
+
+## Shared Game Template v1.4
+All new playable games should start from `games/_template/` and import:
+- `framework/game-template.css` for the responsive desktop/mobile shell.
+- `framework/game-template.js` for the shared HUD, actions, title bar, canvas container, and instructions.
+This keeps game UI consistent while each game's `game.js` contains only its own gameplay logic.

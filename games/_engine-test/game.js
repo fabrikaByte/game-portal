@@ -4,20 +4,19 @@ import { rectsOverlap, clamp } from '../../framework/collision.js';
 import { Particles } from '../../framework/particles.js';
 import { AudioManager } from '../../framework/audio.js';
 import { SaveStore } from '../../framework/save.js';
+import { mountGameTemplate } from '../../framework/game-template.js';
 
-const canvas = document.querySelector('#game');
+const ui = mountGameTemplate(document.querySelector('#game-root'), {
+  title: 'Foundation Engine Test',
+  version: 'Foundation Engine — v1.4',
+  instructions: 'التحكم: الأسهم / WASD / ش س ص ي. اسحب على اللعبة للتحرك. اجمع الدائرة، وتجنب الحاجز. Space / P للإيقاف، و R لإعادة الجولة.'
+});
+
+const canvas = ui.canvas;
 const input = new Input();
 const particles = new Particles();
 const audio = new AudioManager();
 const save = new SaveStore('engine-test');
-const ui = {
-  score: document.querySelector('#score'),
-  lives: document.querySelector('#lives'),
-  best: document.querySelector('#best'),
-  state: document.querySelector('#state'),
-  level: document.querySelector('#level')
-};
-
 const player = { x: 80, y: 220, width: 34, height: 34, speed: 300 };
 const coin = { x: 500, y: 250, size: 18 };
 const obstacle = { x: 700, y: 180, width: 45, height: 180, vx: -130 };
@@ -153,6 +152,10 @@ const engine = new GameEngine({
       ui.best.textContent = Math.max(e.bestScore, save.get('best', 0));
       ui.level.textContent = e.level;
       ui.state.textContent = e.state.toUpperCase();
+      ui.status.textContent = e.state === GAME_STATES.PLAYING ? 'PLAYING' : e.state.toUpperCase();
+      ui.pauseBtn.textContent = e.state === GAME_STATES.PAUSED ? 'متابعة' : 'إيقاف مؤقت';
+      ui.pauseBtn.disabled = e.state !== GAME_STATES.PLAYING && e.state !== GAME_STATES.PAUSED;
+      ui.startBtn.disabled = e.state === GAME_STATES.PLAYING;
     },
 
     score(s) {
@@ -196,6 +199,13 @@ window.addEventListener('keydown', e => {
     if (engine.state === GAME_STATES.PAUSED) engine.resume();
     else if (engine.state === GAME_STATES.PLAYING) engine.pause();
   }
+});
+
+ui.startBtn.addEventListener('click', beginFromInput);
+ui.restartBtn.addEventListener('click', () => engine.restart());
+ui.pauseBtn.addEventListener('click', () => {
+  if (engine.state === GAME_STATES.PLAYING) engine.pause();
+  else if (engine.state === GAME_STATES.PAUSED) engine.resume();
 });
 
 engine.bestScore = save.get('best', 0);
