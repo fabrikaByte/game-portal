@@ -70,7 +70,7 @@ function drawCharacter(ctx,p,type,accent,accent2){
   ctx.shadowBlur=0;ctx.fillStyle='#f6c453';ctx.beginPath();ctx.arc(w/2,14,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f7d3ad';ctx.beginPath();ctx.arc(w/2,17,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#facc15';ctx.roundRect(4,5,w-8,7,5);ctx.fill();ctx.fillStyle=accent;ctx.roundRect(8,25,w-16,18,7);ctx.fill();
  } else if(type==='hammer'){
   ctx.shadowBlur=0;ctx.fillStyle='#f3c9a5';ctx.beginPath();ctx.arc(w/2,15,10,0,Math.PI*2);ctx.fill();ctx.fillStyle=accent;ctx.roundRect(8,25,w-16,19,7);ctx.fill();ctx.fillStyle='#9ca3af';ctx.roundRect(w-1,3,10,20,3);ctx.fill();ctx.fillStyle='#78350f';ctx.fillRect(w+3,20,5,20);
- else if(type==='robot'){
+ } else if(type==='robot'){
   ctx.shadowBlur=0;ctx.fillStyle=accent;ctx.roundRect(6,14,w-12,h-16,7);ctx.fill();
   ctx.fillStyle='#dbeafe';ctx.fillRect(12,22,w-24,13);
   ctx.fillStyle='#0f172a';ctx.fillRect(16,26,5,5);ctx.fillRect(w-21,26,5,5);
