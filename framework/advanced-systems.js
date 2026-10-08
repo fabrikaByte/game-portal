@@ -4,9 +4,13 @@ export class AIController{
 }
 export class TileMap{
  constructor(rows,tile=40){this.rows=rows;this.tile=tile;this.h=rows.length;this.w=Math.max(...rows.map(r=>r.length))}
- solidAt(px,py){const x=Math.floor(px/this.tile),y=Math.floor(py/this.tile);return y>=0&&y<this.h&&x>=0&&x<this.w&&'#'.includes(this.rows[y][x])}
+ cellAt(cx,cy){return cy>=0&&cy<this.h&&cx>=0&&cx<this.w?(this.rows[cy]?.[cx]||'.'):'.'}
+ solidAt(px,py){const x=Math.floor(px/this.tile),y=Math.floor(py/this.tile);return this.cellAt(x,y)==='#'}
+ solidRect(rect){if(!rect)return false;const x0=Math.floor(rect.x/this.tile),x1=Math.floor((rect.x+rect.w-0.001)/this.tile),y0=Math.floor(rect.y/this.tile),y1=Math.floor((rect.y+rect.h-0.001)/this.tile);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(this.cellAt(x,y)==='#')return true;return false}
+ resolveAxis(rect,dx,dy){if(!rect)return {x:dx,y:dy,collided:false};let moved={x:dx,y:dy,collided:false};if(dx){const test={...rect,x:rect.x+dx};if(this.solidRect(test)){moved.x=0;moved.collided=true}}if(dy){const test={...rect,y:rect.y+dy};if(this.solidRect(test)){moved.y=0;moved.collided=true}}return moved}
  draw(g,colors={}){const t=this.tile;for(let y=0;y<this.h;y++)for(let x=0;x<this.rows[y].length;x++){const v=this.rows[y][x];if(v==='.')continue;g.fillStyle=colors[v]||'#334155';g.fillRect(x*t,y*t,t,t);if(v==='#'){g.fillStyle='rgba(255,255,255,.08)';g.fillRect(x*t,y*t,t,4)}}}
 }
+
 export class SpriteAnimator{
  constructor({image,frames=4,fps=8}){this.image=image;this.frames=frames;this.fps=fps;this.t=0;this.frame=0}
  update(dt){this.t+=dt;this.frame=Math.floor(this.t*this.fps)%this.frames}
