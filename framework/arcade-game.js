@@ -97,7 +97,7 @@ export function mountArcadeGame(id){const c=themes[id]||themes['coin-dash'];cons
    if(m==='runner'||m==='racer'||m==='swim'||m==='platform'){
    const speed=(m==='racer'&&p.boost>0)?650:420;
    movement.axisX(p,dt,20,e.width-p.w-20,speed);
-   if(!input.hasKeyboardMovement()&&!input.isMouseDown)movement.move(p,dt,e.width,e.height);
+   if(!input.hasKeyboardMovement()&&!input.isMouseDown())movement.move(p,dt,e.width,e.height);
    if(m==='racer' && (actions.isDown(input,'boost')||input.isDown('shift')||input.isDown(' '))) p.boost=Math.min(1.2,p.boost+dt);
    else p.boost=Math.max(0,p.boost-dt*.8);
    if(m==='platform'){
@@ -111,7 +111,7 @@ export function mountArcadeGame(id){const c=themes[id]||themes['coin-dash'];cons
    else if(m==='shooter'){movement.move(p,dt,e.width,e.height);if(input.isMouseDown||input.isDown(' ')){shots.push({x:p.x+p.w/2,y:p.y});audio.beep({frequency:620,duration:.03});}}
    else if(m==='slash'){
    movement.axisX(p,dt,20,e.width-p.w-20,440);
-   if(!input.hasKeyboardMovement()&&!input.isMouseDown)movement.move(p,dt,e.width,e.height);
+   if(!input.hasKeyboardMovement()&&!input.isMouseDown())movement.move(p,dt,e.width,e.height);
    p.attack=Math.max(0,p.attack-dt);
    if((input.isDown(' ','j','k')||input.isMouseDown)&&p.attack<=0){p.attack=.28;audio.beep({frequency:760,duration:.06});particles.burst(p.x+p.w/2,p.y+p.h/2,8);for(const o of objects)if(!o.dead&&Math.abs((o.x+o.w/2)-(p.x+p.w/2))<85){o.dead=true;collect(e,o,75)}}
  }else if(m==='catcher'||m==='miner'||m==='bubble'||m==='whack'||m==='breaker'||m==='pong'||m==='snake'||m==='switch'||m==='memory'){movement.axisX(p,dt,20,e.width-p.w-20,460);if(!input.hasKeyboardMovement())movement.move(p,dt,e.width,e.height)}
