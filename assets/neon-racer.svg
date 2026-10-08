@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+<defs>
+ <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#17194c"/><stop offset="1" stop-color="#e61b75"/></linearGradient>
+ <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#70e85e"/><stop offset="1" stop-color="#1e8c49"/></linearGradient>
+ <filter id="sh"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-opacity=".35"/></filter>
+</defs>
+<rect width="800" height="450" fill="url(#g)"/>
+
+<path d="M0 330 C130 270 220 390 360 320 S610 270 800 335 V450 H0Z" fill="#071326"/>
+<path d="M0 350 C140 285 220 405 360 335 S610 295 800 350" fill="none" stroke="#13e7ff" stroke-width="9"/>
+<path d="M0 380 C140 315 220 435 360 365 S610 325 800 380" fill="none" stroke="#ff36d6" stroke-width="6"/>
+<g filter="url(#sh)"><path d="M290 255 Q400 175 510 255 L560 310 H240Z" fill="#ef365d"/><path d="M330 245 L370 205 H440 L480 245Z" fill="#3b9fff"/><circle cx="315" cy="310" r="31" fill="#111827" stroke="#73e6ff" stroke-width="7"/><circle cx="485" cy="310" r="31" fill="#111827" stroke="#73e6ff" stroke-width="7"/></g>
+<g fill="#fff"><circle cx="110" cy="100" r="3"/><circle cx="170" cy="180" r="3"/><circle cx="690" cy="95" r="3"/></g>
+<rect x="24" y="22" width="752" height="406" rx="24" fill="none" stroke="#ffffff" stroke-opacity=".18" stroke-width="3"/>
+<rect x="35" y="335" width="730" height="78" rx="18" fill="#04142c" fill-opacity=".72"/>
+<text x="60" y="382" font-family="Arial,sans-serif" font-size="42" font-weight="900" fill="#fff">NEON RACER</text>
+</svg>

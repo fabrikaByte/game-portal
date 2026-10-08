@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Coin Dash — v0.4</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <a href="../../website/index.html">← الموقع</a>
+    <div class="title">🪙 Coin Dash</div>
+    <button id="pauseBtn">⏸ إيقاف</button>
+  </header>
+  <div class="hud">
+    <span id="score">النقاط: 0</span>
+    <span id="coins">عملات: 0</span>
+    <span id="lives">❤️❤️❤️</span>
+    <span id="level">المستوى: 1</span>
+    <span id="combo">🔥 كومبو ×1</span>
+    <span id="best">🏆 الأفضل: 0</span>
+  </div>
+  <main class="game-wrap">
+    <canvas id="game" width="800" height="500"></canvas>
+    <div id="startScreen" class="overlay">
+      <div class="panel">
+        <div class="big">🪙</div>
+        <h1>Coin Dash</h1>
+        <p>اجمع العملات، ارفع الكومبو، وتجنب السيارات الحمراء.</p>
+        <button id="startBtn" class="primary">ابدأ اللعب</button>
+      </div>
+    </div>
+    <div id="pauseScreen" class="overlay hidden">
+      <div class="panel"><h2>⏸ اللعبة متوقفة</h2><button id="resumeBtn" class="primary">متابعة</button></div>
+    </div>
+    <div id="gameOver" class="overlay hidden">
+      <div class="panel">
+        <div class="big">🏁</div><h2>انتهت الجولة</h2>
+        <p id="finalScore"></p><p id="finalBest" class="best-result"></p><button id="restart" class="primary">العب مرة أخرى</button>
+      </div>
+    </div>
+  </main>
+  <p class="hint">الكمبيوتر: ← → أو WASD &nbsp; • &nbsp; الموبايل: اسحب داخل اللعبة يمينًا أو يسارًا</p>
+</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>

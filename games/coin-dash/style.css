@@ -1,0 +1,16 @@
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top,#172554,#070b16 65%);color:#fff;font-family:Arial,sans-serif;touch-action:none}
+.page{width:min(980px,96%);margin:auto;padding-bottom:20px}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar a{color:#fff;text-decoration:none}.title{font-size:20px;font-weight:800}
+.topbar button{background:#1e293b;color:#fff;border:1px solid #475569;border-radius:10px;padding:9px 13px}
+.hud{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.hud span{background:#111827cc;border:1px solid #334155;border-radius:10px;padding:9px;text-align:center;font-size:14px}
+.game-wrap{position:relative}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;border-radius:18px;touch-action:none;background:#111827;box-shadow:0 15px 50px #0008}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:#020617aa;border-radius:18px;backdrop-filter:blur(4px)}
+.hidden{display:none}.panel{text-align:center;background:#0f172af2;border:1px solid #475569;border-radius:20px;padding:28px;min-width:min(360px,85%)}
+.panel h1,.panel h2{margin:6px 0 10px}.panel p{color:#cbd5e1}.big{font-size:54px}
+.best-result{font-weight:800;color:#fde68a;margin:8px 0 16px}.primary{background:#2563eb;border:0;color:#fff;padding:13px 26px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer}
+.hint{text-align:center;color:#94a3b8;font-size:13px}
+@media(max-width:700px){.hud{grid-template-columns:repeat(3,1fr)}.hud span{font-size:12px;padding:8px 3px}.topbar{font-size:13px}.mobile-controls button{width:42%;height:62px}}
