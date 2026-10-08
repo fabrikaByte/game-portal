@@ -1,0 +1,1 @@
+export class LevelManager{constructor(levels=[{score:0,speed:1}]){this.levels=levels;this.current=0}update(score){let i=0;this.levels.forEach((l,n)=>{if(score>=Number(l.score||0))i=n});this.current=i;return i+1}get data(){return this.levels[this.current]||{}}reset(){this.current=0}}

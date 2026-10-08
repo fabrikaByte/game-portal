@@ -1,10 +1,1 @@
-export class SaveStore {
-  constructor(namespace = 'game-portal') { this.namespace = namespace; }
-  key(name) { return `${this.namespace}:${name}`; }
-  get(name, fallback = null) {
-    try { const raw = localStorage.getItem(this.key(name)); return raw === null ? fallback : JSON.parse(raw); }
-    catch { return fallback; }
-  }
-  set(name, value) { try { localStorage.setItem(this.key(name), JSON.stringify(value)); } catch {} }
-  remove(name) { try { localStorage.removeItem(this.key(name)); } catch {} }
-}
+export class SaveStore{constructor(namespace='game-portal'){this.namespace=namespace}key(n){return `${this.namespace}:${n}`}get(n,f=null){try{const r=localStorage.getItem(this.key(n));return r===null?f:JSON.parse(r)}catch{return f}}set(n,v){try{localStorage.setItem(this.key(n),JSON.stringify(v));return true}catch{return false}}remove(n){try{localStorage.removeItem(this.key(n))}catch{}}update(n,p={},f={}){const v={...this.get(n,f),...p};this.set(n,v);return v}}

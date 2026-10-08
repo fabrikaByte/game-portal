@@ -37,3 +37,22 @@
 - Collect all desktop notes before another batch. Do not ask for mobile testing in the same round.
 - Only after desktop is stable, run a dedicated mobile test pass.
 - Then begin Coin Dash on the finalized shared template.
+
+## Foundation Engine v1.6 planned/implemented scope
+- Input: keyboard + mouse + touch coexist without one disabling another.
+- Movement: direct mouse positioning, keyboard vector, frame-independent movement.
+- Collision: reusable rectangle/circle/point helpers.
+- Game states: start/playing/paused/won/game-over/restart.
+- Audio: coin, hit/life loss, pause/resume, win, game-over, persistent mute.
+- Responsive layout: compact HUD/canvas and reduced scrolling.
+- Configuration: engine config for lives/level/timer plus difficulty manager.
+- Save: namespaced localStorage store.
+- Levels, difficulty, timer, power-ups, particles, screen shake, combo.
+- Game metadata registry.
+
+## v1.6.1 verification additions
+- Shared `movement.js` now centralizes keyboard/touch/mouse movement.
+- Coin Dash migrated to the Foundation Engine and shared Audio/Input/Save/Collision systems.
+- Legacy collision name `rectanglesOverlap` remains as a compatibility alias.
+- Game placeholder back-links point to the real portal root (`../../index.html`).
+- Metadata marks unfinished games as `planned` instead of claiming unsupported controls.

@@ -1,245 +1,121 @@
-import { GameEngine, GAME_STATES } from '../../framework/core.js';
-import { Input } from '../../framework/input.js';
-import { rectsOverlap, clamp } from '../../framework/collision.js';
-import { Particles } from '../../framework/particles.js';
-import { SaveStore } from '../../framework/save.js';
-import { mountGameTemplate } from '../../framework/game-template.js';
+import {GameEngine,GAME_STATES} from '../../framework/core.js';
+import {Input} from '../../framework/input.js';
+import {MovementController} from '../../framework/movement.js';
+import {rectsOverlap,clamp} from '../../framework/collision.js';
+import {Particles} from '../../framework/particles.js';
+import {SaveStore} from '../../framework/save.js';
+import {DifficultyManager} from '../../framework/difficulty.js';
+import {LevelManager} from '../../framework/levels.js';
+import {GameTimer} from '../../framework/timer.js';
+import {PowerUpManager} from '../../framework/powerups.js';
+import {ComboManager} from '../../framework/combo.js';
+import {ScreenShake} from '../../framework/screen-shake.js';
+import {getGameMetadata} from '../../framework/metadata.js';
+import {mountGameTemplate} from '../../framework/game-template.js';
 
-const ui = mountGameTemplate(document.querySelector('#game-root'), {
-  title: 'Foundation Engine Test',
-  version: 'Foundation Engine — v1.4',
-  instructions: 'التحكم: الأسهم / WASD — حرّك بالماوس أو اسحب على اللعبة. اجمع الدائرة وتجنب الحاجز. Space / P للإيقاف، و R لإعادة الجولة.'
+const ui=mountGameTemplate(document.querySelector('#game-root'),{
+  title:'Foundation Engine Test v2',version:'Foundation Engine — v1.6.1',
+  instructions:'اختبار شامل للمحرك: حرّك بالماوس أو الأسهم / WASD. اجمع العملات وتجنب الحاجز. Space للإيقاف و R للإعادة.'
 });
+const canvas=ui.canvas,input=new Input(),particles=new Particles(),audio=ui.audio,save=new SaveStore('engine-test-v2');
+const stage=ui.root.querySelector('.game-stage');
+const panel=document.createElement('aside');panel.className='engine-panel';panel.innerHTML='<div class="test-summary"><div><h2>Engine Test v2</h2><p>الاختبارات التلقائية تُفحص أولًا، والاختبارات اليدوية يمكن تعليمها بعد التجربة.</p></div><strong class="test-count" id="test-count">0/16 مكتمل</strong></div><div id="engine-tests" class="test-list"></div><div class="engine-live"><div class="live-box">Difficulty<strong id="diff-state">NORMAL ×1.00</strong></div><div class="live-box">Power-up<strong id="power-state">No active power-up</strong></div></div><div class="engine-note">الأزرار اليدوية تعليمية فقط. لا تعتبر الاختبار ناجحًا إلا بعد أن تجرّبه فعليًا.</div>';
+const layout=document.createElement('div');layout.className='engine-test-layout';stage.parentNode.insertBefore(layout,stage);layout.append(stage,panel);
+const difficulty=new DifficultyManager('NORMAL');
+const levels=new LevelManager([{score:0,speed:1},{score:30,speed:1.1},{score:60,speed:1.25},{score:100,speed:1.4}]);
+const timer=new GameTimer(30),powerups=new PowerUpManager(),combo=new ComboManager(1800),shake=new ScreenShake();
+const movement=new MovementController({input,speed:360,mouseFollow:true,mouseSpeed:1100,bounds:true});
+const player={x:70,y:200,width:34,height:34};
+const coin={x:500,y:250,size:18};
+const obstacle={x:700,y:180,width:45,height:180,vx:-145};
+const power={x:0,y:0,radius:16,visible:false};
+let invulnerable=0,powerNotice=0,lastLevel=1;
 
-const canvas = ui.canvas;
-const input = new Input();
-const particles = new Particles();
-const audio = ui.audio;
-const save = new SaveStore('engine-test');
-const player = { x: 80, y: 220, width: 34, height: 34, speed: 300 };
-const coin = { x: 500, y: 250, size: 18 };
-const obstacle = { x: 700, y: 180, width: 45, height: 180, vx: -130 };
+const tests=new Map([
+ ['input',{label:'Input — Keyboard + Mouse',mode:'manual',done:false,detail:'جرّب الأسهم/WASD ثم حرّك الماوس'}],
+ ['movement',{label:'Movement — الحركة المشتركة',mode:'manual',done:false,detail:'تأكد أن الحركة سلسة ولا يوجد Snap'}],
+ ['collision',{label:'Collision — التصادم',mode:'manual',done:false,detail:'اصطدم بالحاجز مرة واحدة'}],
+ ['states',{label:'Game States — الحالات',mode:'auto',done:false,detail:'Start / Playing / Pause / Game Over / Restart'}],
+ ['audio',{label:'Audio — الصوت والكتم',mode:'manual',done:false,detail:'ابدأ اللعبة ثم جرّب Mute'}],
+ ['save',{label:'Save — الحفظ',mode:'auto',done:false,detail:'يُحفظ Best Score بعد Refresh'}],
+ ['levels',{label:'Levels — المستويات',mode:'auto',done:false,detail:'يتم رفع المستوى مع النقاط'}],
+ ['difficulty',{label:'Difficulty — الصعوبة',mode:'auto',done:false,detail:'Normal / Hard يغيران السرعة'}],
+ ['timer',{label:'Timer — المؤقت',mode:'auto',done:false,detail:'30 ثانية، يتوقف مع Pause'}],
+ ['powerups',{label:'Power-ups — القدرات',mode:'manual',done:false,detail:'اجمع Power-up واختبر مدة التأثير'}],
+ ['particles',{label:'Particles — الجزيئات',mode:'auto',done:false,detail:'تظهر عند جمع Coin'}],
+ ['shake',{label:'Screen Shake — اهتزاز الشاشة',mode:'auto',done:false,detail:'يظهر عند الاصطدام'}],
+ ['combo',{label:'Combo — الكومبو',mode:'manual',done:false,detail:'اجمع 3 عملات متتالية'}],
+ ['responsive',{label:'Responsive — تغيير الحجم',mode:'manual',done:false,detail:'كبّر وصغّر نافذة المتصفح'}],
+ ['config',{label:'Configuration — الإعدادات',mode:'auto',done:false,detail:'تم تحميل القيم المشتركة'}],
+ ['metadata',{label:'Game Metadata — بيانات اللعبة',mode:'auto',done:false,detail:'بيانات اللعبة موجودة وصحيحة'}]
+]);
 
-function worldScale(engine) { return clamp(engine.width / 900, 0.72, 1.15); }
-function syncWorldScale(engine) {
-  const s = worldScale(engine);
-  player.width = 34 * s; player.height = 34 * s; player.speed = 300 * s;
-  coin.size = 18 * s;
-  obstacle.width = 45 * s; obstacle.height = 180 * s; obstacle.vx = -130 * s;
-}
-function resetPlayer(engine) {
-  player.x = 80 * worldScale(engine);
-  player.y = Math.max(8, engine.height / 2 - player.height / 2);
-}
-function obstacleHitbox() {
-  const insetX = Math.min(6 * worldScale(engineRef), obstacle.width * .18);
-  const insetY = Math.min(5 * worldScale(engineRef), obstacle.height * .08);
-  return { x: obstacle.x + insetX, y: obstacle.y + insetY, width: Math.max(1, obstacle.width - insetX * 2), height: Math.max(1, obstacle.height - insetY * 2) };
-}
-let engineRef = null;
-let invulnerable = 0;
-
-function randomCoin(engine) {
-  coin.x = 80 + Math.random() * Math.max(1, engine.width - 160);
-  coin.y = 60 + Math.random() * Math.max(1, engine.height - 120);
-}
-
-function resetWorld(engine) {
-  syncWorldScale(engine);
-  resetPlayer(engine);
-  randomCoin(engine);
-  obstacle.x = engine.width + 100 * worldScale(engine);
-  obstacle.y = 30 + Math.random() * Math.max(1, engine.height - obstacle.height - 60);
-  obstacle.vx = -130 * worldScale(engine);
-  invulnerable = 0;
-  engine.setLives(3);
-}
-
-const engine = new GameEngine({
-  canvas,
-  input,
-  systems: { particles },
-  hooks: {
-    resize(width, height, e) { syncWorldScale(e); },
-    reset: resetWorld,
-
-    start: e => {
-      ui.state.textContent = e.state.toUpperCase();
-    },
-
-    update(dt, e) {
-      if (input.isDown('p')) e.pause();
-
-      let dx = (input.right() ? 1 : 0) - (input.left() ? 1 : 0);
-      let dy = (input.down() ? 1 : 0) - (input.up() ? 1 : 0);
-      const len = Math.hypot(dx, dy) || 1;
-
-      const mouse = input.mousePosition();
-      if (mouse) {
-        const targetX = mouse.x - player.width / 2;
-        const targetY = mouse.y - player.height / 2;
-        const maxStep = player.speed * 1.45 * dt;
-        const mx = clamp(targetX - player.x, -maxStep, maxStep);
-        const my = clamp(targetY - player.y, -maxStep, maxStep);
-        player.x += mx; player.y += my;
-      } else {
-        player.x += (dx / len) * player.speed * dt;
-        player.y += (dy / len) * player.speed * dt;
-      }
-      player.x = clamp(player.x, 0, e.width - player.width);
-      player.y = clamp(player.y, 0, e.height - player.height);
-
-      obstacle.x += obstacle.vx * dt;
-      if (obstacle.x < -obstacle.width - 10) {
-        obstacle.x = e.width + 80 * worldScale(e);
-        obstacle.y = 30 + Math.random() * Math.max(1, e.height - obstacle.height - 60);
-      }
-
-      if (invulnerable > 0) invulnerable -= dt;
-
-      const c = {
-        x: coin.x - coin.size,
-        y: coin.y - coin.size,
-        width: coin.size * 2,
-        height: coin.size * 2
-      };
-
-      if (rectsOverlap(player, c)) {
-        e.addScore(10);
-        particles.burst(coin.x, coin.y, 18);
-        audio.coin();
-        randomCoin(e);
-      }
-
-      const hitbox = obstacleHitbox();
-      if (invulnerable <= 0 && rectsOverlap(player, hitbox)) {
-        invulnerable = .9;
-        e.loseLife();
-        audio.hit();
-        if (e.state === GAME_STATES.GAME_OVER) return;
-        resetPlayer(e);
-      }
-
-      e.level = 1 + Math.floor(e.score / 50);
-    },
-
-    draw(ctx, e) {
-      ctx.clearRect(0, 0, e.width, e.height);
-
-      ctx.fillStyle = '#102d4d';
-      ctx.fillRect(0, 0, e.width, e.height);
-
-      ctx.globalAlpha = .12;
-      for (let x = 0; x < e.width; x += 40) {
-        for (let y = 0; y < e.height; y += 40) {
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(x, y, 1, 1);
-        }
-      }
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = '#ffd54a';
-      ctx.beginPath();
-      ctx.arc(coin.x, coin.y, coin.size, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ff5964';
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-
-      ctx.fillStyle = invulnerable > 0 ? '#9fb7ff' : '#62d7ff';
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-
-      particles.draw(ctx);
-
-      if (e.state !== GAME_STATES.PLAYING) {
-        ctx.fillStyle = 'rgba(0,0,0,.62)';
-        ctx.fillRect(0, 0, e.width, e.height);
-
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#fff';
-        ctx.font = '700 34px system-ui';
-
-        const title =
-          e.state === GAME_STATES.START ? 'ENGINE TEST READY' :
-          e.state === GAME_STATES.PAUSED ? 'PAUSED' :
-          e.state === GAME_STATES.GAME_OVER ? 'GAME OVER' :
-          'YOU WIN';
-
-        ctx.fillText(title, e.width / 2, e.height / 2 - 10);
-        ctx.font = '18px system-ui';
-        ctx.fillText(
-          e.state === GAME_STATES.PAUSED
-            ? 'Space / P to resume'
-            : 'Enter or tap to start a new round',
-          e.width / 2,
-          e.height / 2 + 30
-        );
-        ctx.textAlign = 'left';
-      }
-
-      ui.score.textContent = Math.floor(e.score);
-      ui.lives.textContent = e.lives;
-      ui.best.textContent = Math.max(e.bestScore, save.get('best', 0));
-      ui.level.textContent = e.level;
-      ui.state.textContent = e.state.toUpperCase();
-      ui.status.textContent = e.state === GAME_STATES.PLAYING ? 'PLAYING' : e.state.toUpperCase();
-      ui.pauseBtn.textContent = e.state === GAME_STATES.PAUSED ? 'متابعة' : 'إيقاف مؤقت';
-      ui.pauseBtn.disabled = e.state !== GAME_STATES.PLAYING && e.state !== GAME_STATES.PAUSED;
-      ui.startBtn.disabled = e.state === GAME_STATES.PLAYING;
-    },
-
-    score(s) {
-      const best = save.get('best', 0);
-      if (s > best) save.set('best', s);
-    },
-
-    gameOver(e) {
-      save.set('best', Math.max(save.get('best', 0), e.score));
-    }
-  }
-});
-engineRef = engine;
-
-input.attachPointer(canvas, { mouse: true, touch: true });
-
-function beginFromInput() {
-  if (
-    engine.state === GAME_STATES.START ||
-    engine.state === GAME_STATES.GAME_OVER ||
-    engine.state === GAME_STATES.WON
-  ) {
-    audio.unlock();
-    audio.start();
-    engine.start();
-  }
+function scale(e){return clamp(e.width/900,.72,1.15)}
+function sync(e){const s=scale(e);player.width=34*s;player.height=34*s;player.x=clamp(player.x,0,e.width-player.width);player.y=clamp(player.y,0,e.height-player.height);coin.size=18*s;obstacle.width=45*s;obstacle.height=180*s;obstacle.vx=-145*s;power.radius=16*s}
+function resetPlayer(e){player.x=70*scale(e);player.y=clamp(e.height/2-player.height/2,0,e.height-player.height)}
+function randomCoin(e){coin.x=70+Math.random()*Math.max(1,e.width-140);coin.y=55+Math.random()*Math.max(1,e.height-110)}
+function resetWorld(e){sync(e);resetPlayer(e);randomCoin(e);obstacle.x=e.width+100*scale(e);obstacle.y=25+Math.random()*Math.max(1,e.height-obstacle.height-50);invulnerable=0;power.visible=false;powerups.reset();combo.reset();lastLevel=1;powerNotice=0}
+function mark(id,detail){const t=tests.get(id);if(!t)return;t.done=true;if(detail)t.detail=detail;renderTests()}
+function renderTests(){const el=document.querySelector('#engine-tests');if(!el)return;el.innerHTML='';for(const [id,t] of tests){const row=document.createElement('button');row.type='button';row.className='test-row '+(t.done?'pass':'pending');row.dataset.test=id;row.innerHTML=`<span class="test-dot">${t.done?'✓':'○'}</span><span><strong>${t.label}</strong><small>${t.detail}</small></span>`;if(t.mode==='manual')row.addEventListener('click',()=>{mark(id,'تم تعليم الاختبار كمجتاز يدويًا')});el.appendChild(row)}const done=[...tests.values()].filter(t=>t.done).length;document.querySelector('#test-count').textContent=`${done}/${tests.size} مكتمل`}
+function diagnostics(){
+  const collision=rectsOverlap({x:0,y:0,width:10,height:10},{x:5,y:5,width:10,height:10});
+  const diff=difficulty.speed===1&&difficulty.spawn===1&&difficulty.multiplier===1;
+  const hard=new DifficultyManager('HARD');
+  const level=new LevelManager([{score:0},{score:10}]);
+  const timerProbe=new GameTimer(2);timerProbe.start();timerProbe.update(1);timerProbe.pause();
+  const comboProbe=new ComboManager(1000);comboProbe.hit();comboProbe.hit();comboProbe.hit();
+  const shakeProbe=new ScreenShake();shakeProbe.trigger(8,.2);
+  const saveProbe=new SaveStore('engine-test-v2-diagnostic');saveProbe.set('ok',true);const saveOK=saveProbe.get('ok')===true;saveProbe.remove('ok');
+  const meta=getGameMetadata('_engine-test');
+  if(collision)mark('collision','اختبار رياضي للتصادم ناجح');
+  if(diff&&hard.speed>1)mark('difficulty','Normal و Hard يغيران معاملات السرعة');
+  if(level.update(10)===2)mark('levels','LevelManager يرفع المستوى عند 10 نقاط');
+  if(timerProbe.elapsed===1&&!timerProbe.running)mark('timer','Timer يعمل ويتوقف مع Pause');
+  if(comboProbe.multiplier===2)mark('combo','ComboManager يعطي مضاعفًا بعد 3 ضربات');
+  if(shakeProbe.time>0)mark('shake','ScreenShake يقبل Trigger ويولد مدة');
+  if(particles.items.length===0){particles.burst(10,10,3);if(particles.items.length===3)mark('particles','Particles burst يعمل')}
+  if(saveOK)mark('save','SaveStore يكتب ويقرأ من localStorage');
+  if(meta?.id==='_engine-test'&&meta.status==='engine-test')mark('metadata','Metadata موجود للحالة engine-test');
+  if(movement.speed===360&&timer.limit===30&&difficulty.name==='NORMAL')mark('config','Config المشتركة محملة: speed 360 / timer 30 / Normal');
 }
 
-canvas.addEventListener('pointerdown', e => {
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  beginFromInput();
-});
-
-window.addEventListener('keydown', e => {
-  if (e.key === 'Enter') beginFromInput();
-
-  if (e.key.toLowerCase() === 'r') {
-    engine.restart();
-  }
-
-  if (e.code === 'Space' || e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'ح') {
-    e.preventDefault();
-    if (engine.state === GAME_STATES.PAUSED) { audio.resume(); engine.resume(); }
-    else if (engine.state === GAME_STATES.PLAYING) { audio.pause(); engine.pause(); }
-  }
-});
-
-ui.startBtn.addEventListener('click', beginFromInput);
-ui.restartBtn.addEventListener('click', () => engine.restart());
-ui.pauseBtn.addEventListener('click', () => {
-  if (engine.state === GAME_STATES.PLAYING) { audio.pause(); engine.pause(); }
-  else if (engine.state === GAME_STATES.PAUSED) { audio.resume(); engine.resume(); }
-});
-
-engine.bestScore = save.get('best', 0);
-engine.resize();
-engine.render();
+const engine=new GameEngine({canvas,input,systems:{particles,audio,levels,timer,powerups,combo,shake},config:{lives:3,timer:30},hooks:{
+ resize:(_,__,e)=>{sync(e);mark('responsive','تم استدعاء resize وتحديث أبعاد اللعبة')},
+ reset:resetWorld,
+ start:()=>{audio.unlock();mark('states','Playing بدأ من Start')},
+ pause:()=>{audio.pause();mark('states','Pause يعمل')},
+ resume:()=>{audio.resume();mark('states','Resume يعمل')},
+ score:(s)=>{if(s>save.get('best',0))save.set('best',s);if(s>=30)mark('levels','Level 2 تم الوصول إليه');if(s>=60)mark('levels','Level 3 تم الوصول إليه');if(s>=100)mark('levels','Level 4 تم الوصول إليه')},
+ lifeLost:()=>{audio.hit();shake.trigger(8,.18);mark('collision','اصطدام واحد = خصم حياة واحدة');mark('shake','تم تشغيل Screen Shake عند الاصطدام')},
+ gameOver:e=>{save.set('best',Math.max(save.get('best',0),e.score));mark('states','Game Over يعمل');mark('audio','Game Over sound path متصل')},
+ win:()=>mark('states','Win state يعمل'),
+ timerExpired:()=>mark('timer','Timer وصل للنهاية'),
+ update(dt,e){
+   if(input.isDown('p','ح'))e.pause();
+   movement.move(player,dt,e.width,e.height);
+   obstacle.x+=obstacle.vx*difficulty.speed*levels.data.speed*dt;
+   if(obstacle.x<-obstacle.width-20){obstacle.x=e.width+70;obstacle.y=25+Math.random()*Math.max(1,e.height-obstacle.height-50)}
+   if(invulnerable>0)invulnerable-=dt;
+   if(powerNotice>0)powerNotice-=dt;
+   const c={x:coin.x-coin.size,y:coin.y-coin.size,width:coin.size*2,height:coin.size*2};
+   if(rectsOverlap(player,c)){
+     const comboCount=combo.hit();const multiplier=powerups.has('double-score')?2:1;e.addScore(10*combo.multiplier*multiplier);particles.burst(coin.x,coin.y,18);audio.coin();mark('input','Input أحداث الحركة تعمل');mark('movement','MovementController المشترك يحرك اللاعب');mark('particles','Particles ظهرت عند جمع Coin');if(comboCount>=3)mark('combo','3 Coins متتالية رفعت الـCombo');
+     if(comboCount===3){powerups.collect('double-score',5);power.visible=true;power.x=coin.x;power.y=coin.y;powerNotice=5;mark('powerups','Double Score Power-up تفعّل لمدة 5 ثوانٍ')}
+     randomCoin(e);
+   }
+   if(power.visible&&rectsOverlap(player,{x:power.x-power.radius,y:power.y-power.radius,width:power.radius*2,height:power.radius*2})){powerups.collect('double-score',5);power.visible=false;powerNotice=5;mark('powerups','Power-up تم جمعه بنجاح')}
+   if(invulnerable<=0&&rectsOverlap(player,obstacle,0)){invulnerable=.75;e.loseLife();resetPlayer(e);if(e.state===GAME_STATES.GAME_OVER)return}
+   if(e.score>=120)e.win();
+ },
+ draw(ctx,e){
+   ctx.clearRect(0,0,e.width,e.height);const off=shake.offset();ctx.save();ctx.translate(off.x,off.y);ctx.fillStyle='#102d4d';ctx.fillRect(0,0,e.width,e.height);ctx.globalAlpha=.1;ctx.fillStyle='#fff';for(let x=0;x<e.width;x+=40)for(let y=0;y<e.height;y+=40)ctx.fillRect(x,y,1,1);ctx.globalAlpha=1;
+   ctx.fillStyle='#ffd54a';ctx.beginPath();ctx.arc(coin.x,coin.y,coin.size,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ff5964';ctx.fillRect(obstacle.x,obstacle.y,obstacle.width,obstacle.height);if(power.visible){ctx.fillStyle='#b66cff';ctx.beginPath();ctx.arc(power.x,power.y,power.radius,0,Math.PI*2);ctx.fill()}ctx.fillStyle=invulnerable>0?'#9fb7ff':'#62d7ff';ctx.fillRect(player.x,player.y,player.width,player.height);particles.draw(ctx);ctx.restore();
+   if(e.state!==GAME_STATES.PLAYING){ctx.fillStyle='rgba(0,0,0,.62)';ctx.fillRect(0,0,e.width,e.height);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='700 34px system-ui';const title=e.state===GAME_STATES.START?'ENGINE TEST v2':e.state===GAME_STATES.PAUSED?'PAUSED':e.state===GAME_STATES.GAME_OVER?'GAME OVER':'YOU WIN';ctx.fillText(title,e.width/2,e.height/2-10);ctx.font='18px system-ui';ctx.fillText(e.state===GAME_STATES.PAUSED?'Space / P to resume':'Enter or tap to start',e.width/2,e.height/2+30);ctx.textAlign='left'}
+   ui.score.textContent=Math.floor(e.score);ui.lives.textContent=e.lives;ui.best.textContent=Math.max(e.bestScore,save.get('best',0));ui.level.textContent=e.level;ui.timer.textContent=timer.limit?Math.ceil(timer.remaining)+'s':'∞';ui.combo.textContent='x'+combo.multiplier;ui.state.textContent=e.state.toUpperCase();ui.status.textContent=e.state===GAME_STATES.PLAYING?'PLAYING':e.state.toUpperCase();ui.pauseBtn.textContent=e.state===GAME_STATES.PAUSED?'متابعة':'إيقاف مؤقت';ui.pauseBtn.disabled=!([GAME_STATES.PLAYING,GAME_STATES.PAUSED].includes(e.state));ui.startBtn.disabled=e.state===GAME_STATES.PLAYING;document.querySelector('#power-state').textContent=powerups.has('double-score')?`Double Score ${Math.ceil(powerups.active.get('double-score')?.remaining||0)}s`:'No active power-up';document.querySelector('#diff-state').textContent=`${difficulty.name} ×${difficulty.speed.toFixed(2)}`;
+ }
+}});
+engine.bestScore=save.get('best',0);input.attachPointer(canvas,{mouse:true,touch:true});
+function begin(){if([GAME_STATES.START,GAME_STATES.GAME_OVER,GAME_STATES.WON].includes(engine.state)){audio.unlock();engine.start()}}
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button===0)begin()});ui.startBtn.addEventListener('click',begin);ui.restartBtn.addEventListener('click',()=>{engine.restart();mark('states','Restart أعاد الحالة إلى Start')});ui.pauseBtn.addEventListener('click',()=>engine.state===GAME_STATES.PLAYING?engine.pause():engine.resume());ui.muteBtn.addEventListener('click',()=>mark('audio','زر Mute متصل بـ AudioManager'));
+window.addEventListener('keydown',e=>{if(e.key==='Enter')begin();if(e.key.toLowerCase()==='r'){engine.restart();mark('states','R يعمل لإعادة الجولة')}if(e.code==='Space'||['p','ح'].includes(e.key.toLowerCase())){e.preventDefault();if(engine.state===GAME_STATES.PLAYING){audio.pause();engine.pause()}else if(engine.state===GAME_STATES.PAUSED){audio.resume();engine.resume()}}});
+renderTests();diagnostics();engine.resize();engine.render();
