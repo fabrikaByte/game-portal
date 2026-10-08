@@ -1,1 +1,35 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Engine Test</title><link rel="stylesheet" href="style.css"></head><body><main><div class="top"><a href="../../website/index.html">← Back</a><strong>ENGINE TEST — Foundation v1</strong><span id="status">READY</span></div><section class="hud"><b>Score <span id="score">0</span></b><b>Lives <span id="lives">3</span></b><b>Best <span id="best">0</span></b><b>State <span id="state">START</span></b></section><canvas id="game"></canvas><p>Move: Arrow keys / WASD / Arabic (ش س ص ي). Collect the coin. Touch/click the canvas to start. Space = pause/resume, R = reset to the start screen, then Enter/click to start.</p></main><script type="module" src="game.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Foundation Engine Test</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <div class="top">
+    <a href="../../index.html">← Back</a>
+    <strong>FOUNDATION ENGINE — v1.3</strong>
+    <span id="status">READY</span>
+  </div>
+
+  <section class="hud">
+    <b>Score <span id="score">0</span></b>
+    <b>Lives <span id="lives">3</span></b>
+    <b>Best <span id="best">0</span></b>
+    <b>Level <span id="level">1</span></b>
+    <b>State <span id="state">START</span></b>
+  </section>
+
+  <canvas id="game" aria-label="Foundation Engine test game"></canvas>
+
+  <p>
+    Move: Arrow keys / WASD / Arabic (ش س ص ي).
+    Collect the coin. Tap the canvas to start or restart.
+    Space / P = pause and resume. R = reset to start screen.
+  </p>
+</main>
+<script type="module" src="game.js"></script>
+</body>
+</html>
