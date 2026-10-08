@@ -1,1 +1,15 @@
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(135deg,#06152f,#0b2c55);font-family:Arial,Tahoma,sans-serif;color:#fff;display:grid;place-items:center;padding:24px}.card{width:min(720px,100%);background:rgba(8,25,52,.94);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:42px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}.icon{font-size:64px}.tag{display:inline-block;margin:10px 0;padding:7px 14px;border-radius:999px;background:#153b68;color:#9ed9ff}.idea{font-size:20px;line-height:1.9;color:#dbeafe}.back{display:inline-block;margin-top:22px;padding:12px 22px;border-radius:12px;background:#18baff;color:#00172e;text-decoration:none;font-weight:800}.note{margin-top:20px;color:#9fb3ca}
+
+:root{--game-accent:#38bdf8}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0%,rgba(56,189,248,.12),transparent 32%),#020617;color:#e5eef8;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.game-shell{max-width:1180px;margin:auto;padding:18px}
+.game-topbar,.game-hud,.game-stage{background:rgba(8,15,30,.88);border:1px solid rgba(148,163,184,.18);box-shadow:0 20px 60px rgba(0,0,0,.25);backdrop-filter:blur(12px)}
+.game-topbar{border-radius:20px;padding:14px 18px}
+.game-hud{border-radius:18px;margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:10px}
+.hud-card{padding:9px 8px;border-radius:13px;background:rgba(15,23,42,.78);text-align:center}.hud-card span{display:block;color:#94a3b8;font-size:12px}.hud-card strong{font-size:18px}
+.game-stage{margin-top:12px;border-radius:22px;padding:12px}
+.canvas-wrap{position:relative;aspect-ratio:16/10;overflow:hidden;border-radius:16px;background:#020617}
+.canvas-wrap canvas{display:block;width:100%;height:100%;touch-action:none}
+.game-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.game-actions button{min-height:44px;border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0 16px;background:#0f172a;color:#fff;font-weight:700;cursor:pointer}.game-actions button:first-child{background:#2563eb}
+.game-instructions{color:#94a3b8;text-align:center;margin:12px 0;font-size:13px}
+@media(max-width:760px){.game-hud{grid-template-columns:repeat(4,1fr)}.game-shell{padding:10px}}
+@media(max-width:480px){.game-hud{grid-template-columns:repeat(3,1fr)}}

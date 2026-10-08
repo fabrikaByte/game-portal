@@ -1,7 +1,7 @@
 import { clamp } from './collision.js';
 
 export class MovementController {
-  constructor({ input, speed = 300, mouseFollow = true, mouseSpeed = 900, bounds = true } = {}) {
+  constructor({ input, speed = 300, mouseFollow = true, mouseSpeed = 420, bounds = true } = {}) {
     this.input = input;
     this.speed = speed;
     this.mouseFollow = mouseFollow;

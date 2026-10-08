@@ -56,3 +56,31 @@
 - Legacy collision name `rectanglesOverlap` remains as a compatibility alias.
 - Game placeholder back-links point to the real portal root (`../../index.html`).
 - Metadata marks unfinished games as `planned` instead of claiming unsupported controls.
+
+## Game Build Phase
+- All 30 public game folders now have playable HTML5 game entrypoints using `framework/arcade-game.js` and Foundation Engine systems.
+- Each game has a distinct theme, gameplay mode, HUD styling, particles, screen shake, audio hooks, power-ups, levels, difficulty, 120-second timer, win threshold of 1000, save/best score, keyboard/mouse/touch support.
+- `_engine-test` remains a development-only tool and is not linked from the public portal.
+- Visual art uses local themed SVG portal art plus procedural character/scene rendering so the games do not depend on hotlinked images.
+
+## Engine v3 — Foundation expansion
+The existing engine remains the project foundation. This version adds reusable:
+- Entity Manager
+- Event Bus
+- Object Pool
+- Animation State Machine
+- Level/World Manager
+- PhysicsBody (gravity/jump/ground/double-jump)
+- Camera2D (follow/bounds/shake)
+- Per-game capability manifest
+
+The ten validation games are intentionally different:
+Coin Dash, Jungle Run, Space Defender, Ninja Escape, Tower Climb, Neon Racer,
+Ocean Runner, Zombie Road, Pirate Treasure, Robot Factory.
+
+Rule: a game imports only the systems it needs; reusable improvements discovered during
+game implementation should be promoted into the shared engine rather than duplicated.
+
+
+## Engine v3.1 game-validation expansion
+The validation set now includes Zombie Road, Pirate Treasure, and Robot Factory pages. Platform games use shared gravity/jump state; slash games have a shared melee action; racer games have a shared boost state. These are reusable engine capabilities, not per-game one-off code.
