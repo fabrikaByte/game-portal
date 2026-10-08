@@ -1,69 +1,7 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2D GAMES — بوابة الألعاب</title>
-<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header class="topbar">
-  <div class="topbar-inner">
-    <a class="brand" href="#home" aria-label="2D GAMES">
-      <img src="assets/logo.svg" alt=""><span><b>2D <i>GAMES</i></b><small>Play • Explore • Have Fun</small></span>
-    </a>
-    <nav class="main-nav">
-      <a class="active" href="#home">⌂ <span>الرئيسية</span></a>
-      <a href="#featured">🎮 <span>الألعاب</span></a>
-      <a href="#leaderboard">🏆 <span>أفضل النتائج</span></a>
-      <a href="#profile">♙ <span>حسابي</span></a>
-    </nav>
-    <div class="search"><input id="searchInput" placeholder="ابحث عن لعبة..." aria-label="ابحث عن لعبة"><button id="searchBtn">⌕</button></div>
-    <button class="theme" id="themeBtn" aria-label="تغيير المظهر">☼</button>
-  </div>
-</header>
-<main id="home" class="site">
-  <section class="main-grid">
-    <div class="content">
-      <section class="hero panel">
-        <div class="hero-copy">
-          <h1><span>مرحباً بك في</span> عالم الألعاب</h1>
-          <p>استمتع بأفضل ألعاب 2D مباشرة من متصفحك<br>مجموعة مميزة من الألعاب الممتعة والمجانية</p>
-          <a class="primary hero-btn" href="games/coin-dash/index.html">ابدأ اللعب الآن 🎮</a>
-          <div class="dots"><b></b><i></i><i></i><i></i></div>
-        </div>
-        <div class="hero-art"><img src="assets/hero-art.png" alt="شخصية لعبة منصات"></div>
-      </section>
-
-      <section id="featured" class="section panel">
-        <div class="section-head"><h2>🎮 ألعابنا المميزة</h2><a href="#featured">عرض الكل →</a></div>
-        <div class="featured-grid">
-          <article class="game-card" data-game="Coin Dash" data-category="مغامرات"><div class="thumb"><img src="assets/coin-dash.svg"><span>الأكثر لعباً</span></div><h3>Coin Dash</h3><p>اجمع العملات وتجنب العوائق في مغامرة مليئة بالتحديات!</p><a class="primary play" href="games/coin-dash/index.html">العب الآن ▶</a><footer><strong>⭐ 4.8</strong><em>مغامرة</em></footer></article>
-          <article class="game-card" data-game="Jungle Run" data-category="مغامرات"><div class="thumb"><img src="assets/jungle-run.svg"></div><h3>Jungle Run</h3><p>اقفز وتجاوز العقبات في الغابة واجمع أكبر عدد من الجوائز!</p><button class="primary play coming">العب الآن ▶</button><footer><strong>⭐ 4.6</strong><em>مغامرة</em></footer></article>
-          <article class="game-card" data-game="Space Defender" data-category="إطلاق نار"><div class="thumb"><img src="assets/space-defender.svg"></div><h3>Space Defender</h3><p>دافع عن كوكبك من الأعداء في الفضاء!</p><button class="primary play coming">العب الآن ▶</button><footer><strong>⭐ 4.5</strong><em>إطلاق نار</em></footer></article>
-          <article class="game-card" data-game="Pixel Jump" data-category="مهارة"><div class="thumb"><img src="assets/pixel-jump.svg"></div><h3>Pixel Jump</h3><p>اقفز بين المنصات واجمع أكبر عدد من النقاط!</p><button class="primary play coming">العب الآن ▶</button><footer><strong>⭐ 4.3</strong><em>مهارة</em></footer></article>
-        </div>
-      </section>
-
-      <section class="section panel categories"><div class="section-head"><h2>▦ التصنيفات</h2><a href="#categories">عرض الكل →</a></div><div class="category-grid" id="categories">
-        <button data-category="مغامرات" class="cat purple">🏃<b>مغامرات</b><small>10 ألعاب</small></button><button data-category="إطلاق نار" class="cat blue">◉<b>إطلاق نار</b><small>2 ألعاب</small></button><button data-category="مهارة" class="cat green">🏆<b>مهارة</b><small>10 ألعاب</small></button><button data-category="سباقات" class="cat orange">🚗<b>سباقات</b><small>2 ألعاب</small></button><button data-category="ألغاز" class="cat pink">🧩<b>ألغاز</b><small>4 ألعاب</small></button><button data-category="رياضة" class="cat cyan">⚽<b>رياضة</b><small>1 ألعاب</small></button>
-      </div></section>
-
-      <section class="section panel new-games"><div class="section-head"><h2>⭐ ألعاب جديدة</h2><a href="#new">عرض الكل →</a></div><div class="new-grid" id="new">
-        <article data-game="Forest Escape"><img src="assets/forest-escape.svg"><b>Forest Escape</b><span>جديد</span></article><article data-game="Ocean Runner"><img src="assets/ocean-runner.svg"><b>Ocean Runner</b><span>جديد</span></article><article data-game="Tower Climb"><img src="assets/tower-climb.svg"><b>Tower Climb</b><span>جديد</span></article><article data-game="Neon Racer"><img src="assets/neon-racer.svg"><b>Neon Racer</b><span>جديد</span></article><article data-game="Bubble Pop"><img src="assets/bubble-pop.svg"><b>Bubble Pop</b><span>جديد</span></article>
-      </div></section>
-    </div>
-
-    <aside class="sidebar">
-      <section id="leaderboard" class="side-card panel"><h2>👑 أفضل النتائج</h2><ol>
-        <li><b>1</b><img src="assets/coin-dash.svg"><span>Coin Dash</span><strong>24870 ⭐</strong></li><li><b>2</b><img src="assets/jungle-run.svg"><span>Jungle Run</span><strong>18760 ⭐</strong></li><li><b>3</b><img src="assets/space-defender.svg"><span>Space Defender</span><strong>15230 ⭐</strong></li><li><b>4</b><img src="assets/pixel-jump.svg"><span>Pixel Jump</span><strong>9800 ⭐</strong></li><li><b>5</b><img src="assets/tower-climb.svg"><span>Sky Adventure</span><strong>7600 ⭐</strong></li>
-      </ol></section>
-      <section id="profile" class="side-card panel profile"><h2>♟ ملفك الشخصي</h2><div class="avatar">●</div><h3>ضيف</h3><p>استمتع باللعب!</p><button class="primary auth" data-auth="login">تسجيل الدخول</button><button class="outline auth" data-auth="register">إنشاء حساب　♙</button></section>
-      <section class="side-card panel quick"><h2>⚙ معلومات سريعة</h2><div>🎮 <span>إجمالي الألعاب<br><b>42 لعبة</b></span></div><div>🏆 <span>أفضل نتيجة (Coin Dash)<br><b>24870</b></span></div><div>♙ <span>أكثر لاعب نشاطاً<br><b>GameMaster</b></span></div><div>◷ <span>وقت اللعب اليوم<br><b>1,248 دقيقة</b></span></div></section>
-    </aside>
-  </section>
-</main>
-<footer class="footer"><div><img src="assets/logo.svg"><b>2D <i>GAMES</i></b><small>Play • Explore • Have Fun</small></div><nav><a href="#home">الرئيسية</a><a href="#featured">الألعاب</a><a href="#leaderboard">أفضل النتائج</a><a href="#profile">حول الموقع</a><a href="#profile">تواصل معنا</a></nav><p>▶　f　◉<br>© 2025 2D Games. جميع الحقوق محفوظة.</p></footer>
-<div id="modal" class="modal" hidden><div class="modal-bg" data-close></div><div class="modal-card"><button data-close>×</button><div id="modalIcon">🎮</div><h2 id="modalTitle"></h2><p id="modalText"></p><a id="modalPlay" class="primary" href="#">فتح اللعبة</a></div></div>
-<script src="app.js"></script>
-</body></html>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2D Games — ألعاب 2D</title><link rel="stylesheet" href="style.css"></head><body>
+<header class="top"><div class="top-inner"><a class="brand" href="index.html"><img src="assets/logo.svg"><span><b>2D GAMES</b><small>PLAY • EXPLORE • HAVE FUN</small></span></a><nav><a class="active" href="#home">الرئيسية</a><a href="#games">الألعاب</a><a href="#categories">التصنيفات</a><a href="#scores">أفضل النتائج</a></nav><div class="search"><input id="search" placeholder="ابحث عن لعبة"><button>⌕</button></div></div></header>
+<main id="home" class="site"><section class="hero"><div class="hero-copy"><span class="hero-tag">بوابة ألعاب 2D</span><h1>ألعاب مختلفة فعلًا، <span>تجربة واحدة ممتعة</span></h1><p>10 ألعاب مصممة بميكانيكيات وهوية بصرية مستقلة، تعمل مباشرة من المتصفح.</p><a class="cta" href="#games">ابدأ اللعب الآن</a></div><div class="hero-art"><img src="assets/hero.svg" alt="2D games"></div></section>
+<section id="games" class="section"><div class="section-head"><h2>ألعاب مميزة</h2><span>10 ألعاب جاهزة</span></div><div id="game-grid" class="game-grid"></div></section>
+<section id="categories" class="section"><div class="section-head"><h2>التصنيفات</h2></div><div id="cats" class="cats"></div></section>
+<section id="scores" class="section lower"><div class="panel"><h2>أفضل النتائج</h2><ol id="scores-list"></ol></div><div class="panel about"><h2>المحرك المشترك</h2><p>Input • Game States • Save • Audio • Particles • Collision • Screen Shake • Responsive Canvas</p><strong>الـFramework مشترك، لكن Gameplay كل لعبة مستقل.</strong></div></section></main>
+<footer>© 2026 2D Games • Play • Explore • Have Fun</footer><script src="app.js"></script></body></html>

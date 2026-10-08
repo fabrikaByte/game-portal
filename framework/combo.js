@@ -1,1 +1,0 @@
-export class ComboManager{constructor(windowMs=1800){this.windowMs=windowMs;this.reset()}hit(){this.count++;this.timer=this.windowMs;return this.count}update(dt){if(this.count&&(this.timer-=dt*1000)<=0)this.reset()}reset(){this.count=0;this.timer=0}get multiplier(){return Math.max(1,1+Math.floor(this.count/3))}}

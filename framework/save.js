@@ -1,1 +1,5 @@
-export class SaveStore{constructor(namespace='game-portal'){this.namespace=namespace}key(n){return `${this.namespace}:${n}`}get(n,f=null){try{const r=localStorage.getItem(this.key(n));return r===null?f:JSON.parse(r)}catch{return f}}set(n,v){try{localStorage.setItem(this.key(n),JSON.stringify(v));return true}catch{return false}}remove(n){try{localStorage.removeItem(this.key(n))}catch{}}update(n,p={},f={}){const v={...this.get(n,f),...p};this.set(n,v);return v}}
+export class SaveStore{
+  constructor(key){this.key=`2d-games:${key}`;this.mem={};try{this.mem=JSON.parse(localStorage.getItem(this.key)||'{}')||{}}catch{this.mem={}}}
+  get(k,f=0){return Object.prototype.hasOwnProperty.call(this.mem,k)?this.mem[k]:f}
+  set(k,v){this.mem[k]=v;try{localStorage.setItem(this.key,JSON.stringify(this.mem))}catch{}}
+}

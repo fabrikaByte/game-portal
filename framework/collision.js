@@ -1,3 +1,4 @@
-export function rectsOverlap(a,b,padding=0){const p=Math.max(0,Number(padding)||0);return a.x+p<b.x+b.width-p&&a.x+a.width-p>b.x+p&&a.y+p<b.y+b.height-p&&a.y+a.height-p>b.y+p}export function circleHit(a,b){const dx=a.x-b.x,dy=a.y-b.y,r=a.radius+b.radius;return dx*dx+dy*dy<=r*r}export function clamp(v,min,max){return Math.max(min,Math.min(max,v))}export function moveToward(c,t,d){return Math.abs(t-c)<=d?t:c+Math.sign(t-c)*d}
-
-export const rectanglesOverlap = rectsOverlap;
+export const hit=(a,b,pad=0)=>a.x+pad<b.x+b.w&&a.x+a.w-pad>b.x&&a.y+pad<b.y+b.h&&a.y+a.h-pad>b.y;
+export const circle=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;const r=a.r+b.r;return dx*dx+dy*dy<=r*r};
+export const pointInRect=(p,r)=>p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
+export const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
