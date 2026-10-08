@@ -5,7 +5,7 @@ import { mountGameTemplate } from '../../framework/game-template.js';
 const ui = mountGameTemplate(document.querySelector('#game-root'), {
   title: 'NEW 2D GAME',
   version: 'FOUNDATION ENGINE',
-  instructions: 'وصف مختصر لطريقة اللعب.'
+  instructions: 'التحكم: الأسهم / WASD — حرّك بالماوس أو اسحب على اللعبة. وصف مختصر لطريقة اللعب.'
 });
 
 const input = new Input();
@@ -32,12 +32,14 @@ ui.pauseBtn.addEventListener('click', () => {
   if (engine.state === GAME_STATES.PLAYING) engine.pause();
   else if (engine.state === GAME_STATES.PAUSED) engine.resume();
 });
+const audio = ui.audio;
+input.attachPointer(canvas, { mouse: true, touch: true });
 canvas.addEventListener('pointerdown', begin);
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') begin();
   if (e.key.toLowerCase() === 'r') engine.restart();
-  if (e.code === 'Space') {
+  if (e.code === 'Space' || e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'ح') {
     e.preventDefault();
     if (engine.state === GAME_STATES.PLAYING) engine.pause();
     else if (engine.state === GAME_STATES.PAUSED) engine.resume();

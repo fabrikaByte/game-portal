@@ -2,24 +2,41 @@ import { GameEngine, GAME_STATES } from '../../framework/core.js';
 import { Input } from '../../framework/input.js';
 import { rectsOverlap, clamp } from '../../framework/collision.js';
 import { Particles } from '../../framework/particles.js';
-import { AudioManager } from '../../framework/audio.js';
 import { SaveStore } from '../../framework/save.js';
 import { mountGameTemplate } from '../../framework/game-template.js';
 
 const ui = mountGameTemplate(document.querySelector('#game-root'), {
   title: 'Foundation Engine Test',
   version: 'Foundation Engine — v1.4',
-  instructions: 'التحكم: الأسهم / WASD / ش س ص ي. اسحب على اللعبة للتحرك. اجمع الدائرة، وتجنب الحاجز. Space / P للإيقاف، و R لإعادة الجولة.'
+  instructions: 'التحكم: الأسهم / WASD — حرّك بالماوس أو اسحب على اللعبة. اجمع الدائرة وتجنب الحاجز. Space / P للإيقاف، و R لإعادة الجولة.'
 });
 
 const canvas = ui.canvas;
 const input = new Input();
 const particles = new Particles();
-const audio = new AudioManager();
+const audio = ui.audio;
 const save = new SaveStore('engine-test');
 const player = { x: 80, y: 220, width: 34, height: 34, speed: 300 };
 const coin = { x: 500, y: 250, size: 18 };
 const obstacle = { x: 700, y: 180, width: 45, height: 180, vx: -130 };
+
+function worldScale(engine) { return clamp(engine.width / 900, 0.72, 1.15); }
+function syncWorldScale(engine) {
+  const s = worldScale(engine);
+  player.width = 34 * s; player.height = 34 * s; player.speed = 300 * s;
+  coin.size = 18 * s;
+  obstacle.width = 45 * s; obstacle.height = 180 * s; obstacle.vx = -130 * s;
+}
+function resetPlayer(engine) {
+  player.x = 80 * worldScale(engine);
+  player.y = Math.max(8, engine.height / 2 - player.height / 2);
+}
+function obstacleHitbox() {
+  const insetX = Math.min(6 * worldScale(engineRef), obstacle.width * .18);
+  const insetY = Math.min(5 * worldScale(engineRef), obstacle.height * .08);
+  return { x: obstacle.x + insetX, y: obstacle.y + insetY, width: Math.max(1, obstacle.width - insetX * 2), height: Math.max(1, obstacle.height - insetY * 2) };
+}
+let engineRef = null;
 let invulnerable = 0;
 
 function randomCoin(engine) {
@@ -28,12 +45,12 @@ function randomCoin(engine) {
 }
 
 function resetWorld(engine) {
-  player.x = 80;
-  player.y = Math.max(20, engine.height / 2 - player.height / 2);
+  syncWorldScale(engine);
+  resetPlayer(engine);
   randomCoin(engine);
-  obstacle.x = engine.width + 100;
-  obstacle.y = 50 + Math.random() * Math.max(1, engine.height - 180);
-  obstacle.vx = -130;
+  obstacle.x = engine.width + 100 * worldScale(engine);
+  obstacle.y = 30 + Math.random() * Math.max(1, engine.height - obstacle.height - 60);
+  obstacle.vx = -130 * worldScale(engine);
   invulnerable = 0;
   engine.setLives(3);
 }
@@ -43,6 +60,7 @@ const engine = new GameEngine({
   input,
   systems: { particles },
   hooks: {
+    resize(width, height, e) { syncWorldScale(e); },
     reset: resetWorld,
 
     start: e => {
@@ -56,13 +74,25 @@ const engine = new GameEngine({
       let dy = (input.down() ? 1 : 0) - (input.up() ? 1 : 0);
       const len = Math.hypot(dx, dy) || 1;
 
-      player.x = clamp(player.x + (dx / len) * player.speed * dt, 0, e.width - player.width);
-      player.y = clamp(player.y + (dy / len) * player.speed * dt, 0, e.height - player.height);
+      const mouse = input.mousePosition();
+      if (mouse) {
+        const targetX = mouse.x - player.width / 2;
+        const targetY = mouse.y - player.height / 2;
+        const maxStep = player.speed * 1.45 * dt;
+        const mx = clamp(targetX - player.x, -maxStep, maxStep);
+        const my = clamp(targetY - player.y, -maxStep, maxStep);
+        player.x += mx; player.y += my;
+      } else {
+        player.x += (dx / len) * player.speed * dt;
+        player.y += (dy / len) * player.speed * dt;
+      }
+      player.x = clamp(player.x, 0, e.width - player.width);
+      player.y = clamp(player.y, 0, e.height - player.height);
 
       obstacle.x += obstacle.vx * dt;
-      if (obstacle.x < -obstacle.width) {
-        obstacle.x = e.width + 80;
-        obstacle.y = 50 + Math.random() * Math.max(1, e.height - 180);
+      if (obstacle.x < -obstacle.width - 10) {
+        obstacle.x = e.width + 80 * worldScale(e);
+        obstacle.y = 30 + Math.random() * Math.max(1, e.height - obstacle.height - 60);
       }
 
       if (invulnerable > 0) invulnerable -= dt;
@@ -77,17 +107,17 @@ const engine = new GameEngine({
       if (rectsOverlap(player, c)) {
         e.addScore(10);
         particles.burst(coin.x, coin.y, 18);
-        audio.beep({ frequency: 760 });
+        audio.coin();
         randomCoin(e);
       }
 
-      if (invulnerable <= 0 && rectsOverlap(player, obstacle)) {
+      const hitbox = obstacleHitbox();
+      if (invulnerable <= 0 && rectsOverlap(player, hitbox)) {
         invulnerable = .9;
         e.loseLife();
-        audio.beep({ frequency: 140, duration: .15, type: 'square' });
+        audio.hit();
         if (e.state === GAME_STATES.GAME_OVER) return;
-        player.x = 80;
-        player.y = Math.max(20, e.height / 2 - player.height / 2);
+        resetPlayer(e);
       }
 
       e.level = 1 + Math.floor(e.score / 50);
@@ -168,8 +198,9 @@ const engine = new GameEngine({
     }
   }
 });
+engineRef = engine;
 
-input.attachTouch(canvas);
+input.attachPointer(canvas, { mouse: true, touch: true });
 
 function beginFromInput() {
   if (
@@ -177,7 +208,8 @@ function beginFromInput() {
     engine.state === GAME_STATES.GAME_OVER ||
     engine.state === GAME_STATES.WON
   ) {
-    audio.beep({ frequency: 520, duration: .05 });
+    audio.unlock();
+    audio.start();
     engine.start();
   }
 }
@@ -194,18 +226,18 @@ window.addEventListener('keydown', e => {
     engine.restart();
   }
 
-  if (e.code === 'Space') {
+  if (e.code === 'Space' || e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'ح') {
     e.preventDefault();
-    if (engine.state === GAME_STATES.PAUSED) engine.resume();
-    else if (engine.state === GAME_STATES.PLAYING) engine.pause();
+    if (engine.state === GAME_STATES.PAUSED) { audio.resume(); engine.resume(); }
+    else if (engine.state === GAME_STATES.PLAYING) { audio.pause(); engine.pause(); }
   }
 });
 
 ui.startBtn.addEventListener('click', beginFromInput);
 ui.restartBtn.addEventListener('click', () => engine.restart());
 ui.pauseBtn.addEventListener('click', () => {
-  if (engine.state === GAME_STATES.PLAYING) engine.pause();
-  else if (engine.state === GAME_STATES.PAUSED) engine.resume();
+  if (engine.state === GAME_STATES.PLAYING) { audio.pause(); engine.pause(); }
+  else if (engine.state === GAME_STATES.PAUSED) { audio.resume(); engine.resume(); }
 });
 
 engine.bestScore = save.get('best', 0);
