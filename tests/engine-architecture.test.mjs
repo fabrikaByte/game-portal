@@ -23,7 +23,7 @@ const reporter=new ErrorReporter();reporter.capture(new Error('x'));assert.equal
 const tweens=new TweenManager();const obj={x:0};tweens.to(obj,{x:10},1);tweens.update(.5);assert(obj.x>0&&obj.x<10);tweens.update(.5);assert.equal(obj.x,10);
 const shellImport=readFileSync('framework/index.js','utf8');assert(!shellImport.includes('game-shell'));
 const uiShell=readFileSync('ui/game-shell.js','utf8');assert(uiShell.includes("../framework/audio.js")&&uiShell.includes("../framework/core.js"));
-const physics=readFileSync('framework/physics-2d.js','utf8');assert(physics.includes('Math.min(128'));
+const physics=readFileSync('framework/physics-2d.js','utf8');assert(physics.includes('Continuous axis sweeps') && physics.includes('function moveAndCollide'));
 console.log('ENGINE_ARCHITECTURE_TEST_PASS');
 import {Body2D,aabbOverlap,moveAndCollide} from '../framework/physics-2d.js';
 import {SpatialHash} from '../framework/spatial-hash.js';

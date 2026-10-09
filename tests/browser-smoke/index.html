@@ -1,26 +1,159 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Engine Browser Smoke</title><style>body{font-family:system-ui;background:#06111f;color:#fff;padding:20px}#out{white-space:pre-wrap}.pass{color:#4ade80}.fail{color:#f87171}canvas{width:640px;height:360px;display:block;border:1px solid #315}</style></head><body><h1>Engine Browser Smoke</h1><div id="out">RUNNING…</div><canvas id="c"></canvas><script type="module">
-import {GameEngine,GAME_STATES} from '../../framework/core.js';
-import {Input} from '../../framework/input.js';
-import {Body2D,moveAndCollide} from '../../framework/physics-2d.js';
-const out=document.getElementById('out'); const results=[];
-function ok(name,cond){results.push({name,pass:!!cond});if(!cond)throw new Error(name)}
-try{
- const input=new Input();const canvas=document.getElementById('c');input.attach(canvas);input.setLogicalSize(960,540);input.setViewport({scale:1,offsetX:0,offsetY:0});
- canvas.getBoundingClientRect=()=>({left:0,top:0,width:640,height:360,right:640,bottom:360});
- canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:320,clientY:180,bubbles:true,pointerType:'mouse',button:0,pointerId:1}));
- ok('pointer maps to logical coordinates',Math.abs(input.pointer.x-480)<0.01&&Math.abs(input.pointer.y-270)<0.01);
- input.clear();
- let seenPressed=false,updates=0;
- const engine=new GameEngine({canvas,input,config:{width:960,height:540,lives:2},hooks:{update(){updates++;seenPressed ||= input.pressed('d')}}});
- input._kd(new KeyboardEvent('keydown',{key:'d',code:'KeyD',bubbles:true,cancelable:true}));
- engine.start();
- await new Promise(r=>setTimeout(r,120));
- ok('engine reaches PLAYING',engine.state===GAME_STATES.PLAYING);
- ok('input.pressed visible during update',seenPressed);
- ok('input.just clears automatically each frame',!input.pressed('d'));
- const before=updates;engine.start();await new Promise(r=>setTimeout(r,120));const growth=updates-before;ok('start does not create duplicate RAF loops',growth>2&&growth<30);
- const body=new Body2D({x:0,y:0,w:10,h:10,gravity:0});body.vx=10000;const wall={x:50,y:0,w:10,h:50};const contacts=moveAndCollide(body,[wall],0.05);ok('high-speed body does not tunnel through thin wall',body.right<=wall.x+0.001&&contacts>0);
- engine.destroy();input.destroy();
- out.className='pass';out.textContent=results.map(r=>(r.pass?'PASS':'FAIL')+' — '+r.name).join('\n');window.__BROWSER_SMOKE__={ok:true,results};
-}catch(e){out.className='fail';out.textContent='FAIL — '+e.stack;window.__BROWSER_SMOKE__={ok:false,error:String(e),results};}
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Engine Browser Smoke</title>
+<style>
+  :root{color-scheme:dark}body{margin:0;padding:20px;font:14px/1.55 system-ui;background:#06111f;color:#e5f1ff}
+  h1{margin:0 0 8px;font-size:24px}#summary{margin:8px 0 16px;font-weight:800}#out{white-space:pre-wrap;overflow-wrap:anywhere}
+  .pass{color:#4ade80}.fail{color:#f87171}.pending{color:#93c5fd}canvas{width:min(640px,100%);aspect-ratio:16/9;height:auto;display:block;border:1px solid #334155;background:#020812;touch-action:none}
+  .test{padding:3px 0}.meta{color:#94a3b8;font-size:12px;margin-top:12px}
+</style>
+</head><body>
+<h1>Engine Browser Smoke</h1>
+<div id="summary" class="pending">Running browser checks…</div>
+<div id="out" aria-live="polite">Loading engine modules…</div>
+<canvas id="c" width="960" height="540" aria-label="engine input test canvas"></canvas>
+<p class="meta">This page tests real browser module loading, input mapping, lifecycle, persistence, collision, resizing, and error handling. It is not a game.</p>
+<script type="module">
+const summary = document.getElementById('summary');
+const out = document.getElementById('out');
+const results = [];
+const show = () => {
+  out.textContent = results.map(r => `${r.pass ? 'PASS' : 'FAIL'} — ${r.name}${r.detail ? `\n  ${r.detail}` : ''}`).join('\n');
+  const failed = results.filter(r => !r.pass).length;
+  summary.className = failed ? 'fail' : 'pass';
+  summary.textContent = `${results.length - failed}/${results.length} checks passed`;
+};
+async function check(name, fn) {
+  try { const value = await fn(); if (value === false) throw new Error('assertion returned false'); results.push({name, pass:true}); }
+  catch (error) { results.push({name, pass:false, detail:error?.stack || String(error)}); }
+  show();
+}
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+let engine, input, canvas;
+try {
+  const [core, inputMod, physics, collision, saveMod, particlesMod, audioMod] = await Promise.all([
+    import('../../framework/core.js'), import('../../framework/input.js'), import('../../framework/physics-2d.js'),
+    import('../../framework/collision.js'), import('../../framework/save.js'), import('../../framework/particles.js'), import('../../framework/audio.js')
+  ]);
+  const {GameEngine, GAME_STATES} = core;
+  const {Input} = inputMod;
+  const {Body2D, moveAndCollide, aabbOverlap} = physics;
+  const {hit, circle, pointInRect} = collision;
+  const {SaveStore} = saveMod;
+  const {Particles} = particlesMod;
+  const {AudioManager} = audioMod;
+  await check('ES module graph loads', () => !!GameEngine && !!Input && !!Body2D && !!SaveStore && !!AudioManager);
+
+  canvas = document.getElementById('c');
+  input = new Input(); input.attach(canvas); input.setLogicalSize(960, 540);
+  const originalRect = canvas.getBoundingClientRect.bind(canvas);
+  const testRect = {left: 40, top: 30, width: 640, height: 360, right: 680, bottom: 390};
+  canvas.getBoundingClientRect = () => testRect;
+  const scale = Math.min(testRect.width / 960, testRect.height / 540);
+  input.setViewport({scale, offsetX:(testRect.width - 960 * scale) / 2, offsetY:(testRect.height - 540 * scale) / 2});
+  canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX:360, clientY:210, bubbles:true, pointerType:'mouse', button:0, pointerId:1}));
+  await check('pointer maps to logical center', () => Math.abs(input.pointer.x - 480) < .01 && Math.abs(input.pointer.y - 270) < .01);
+  canvas.dispatchEvent(new PointerEvent('pointerleave', {bubbles:true,pointerType:'mouse',buttons:0}));
+  await check('mouse leaving canvas disables stale pointer-follow', () => input.pointer.active === false);
+  input.clear();
+  const letterboxRect = {left:100, top:50, width:500, height:360, right:600, bottom:410};
+  canvas.getBoundingClientRect = () => letterboxRect;
+  const letterboxScale = Math.min(500 / 960, 360 / 540);
+  const letterboxY = (360 - 540 * letterboxScale) / 2;
+  input.setViewport({scale:letterboxScale, offsetX:(500 - 960 * letterboxScale) / 2, offsetY:letterboxY});
+  canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX:350, clientY:230, bubbles:true, pointerType:'mouse', button:0, pointerId:2}));
+  await check('pointer accounts for letterboxing', () => Math.abs(input.pointer.x - 480) < .01 && Math.abs(input.pointer.y - 270) < .01);
+  await check('pointer press can be consumed only once', () => input.consumePointerPress() === true && input.consumePointerPress() === false);
+  input.clear();
+  canvas.getBoundingClientRect = originalRect;
+  const touchRect = canvas.getBoundingClientRect();
+  const touchScale = Math.min(touchRect.width / 960, touchRect.height / 540);
+  input.setViewport({scale:touchScale, offsetX:(touchRect.width - 960*touchScale)/2, offsetY:(touchRect.height - 540*touchScale)/2});
+  const touchX = touchRect.left + touchRect.width / 2, touchY = touchRect.top + touchRect.height / 2;
+  canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX:touchX,clientY:touchY,bubbles:true,pointerType:'touch',button:0,pointerId:3}));
+  canvas.dispatchEvent(new PointerEvent('pointermove', {clientX:touchX+60,clientY:touchY+8,bubbles:true,pointerType:'touch',button:0,pointerId:3}));
+  const swipe = input.consumeSwipe();
+  await check('touch swipe is detected and quantified', () => !!swipe && swipe.dx > 22 && swipe.dy > 0);
+  input.clear();
+
+  let updates = 0, sawPressed = false, sawMove = false;
+  engine = new GameEngine({canvas, input, config:{width:960,height:540,lives:2,levelEvery:100}, hooks:{update(){updates++;sawPressed ||= input.pressed('d');sawMove ||= input.vector().x > 0;}}});
+  engine.start();
+  await check('start enters PLAYING state', () => engine.state === GAME_STATES.PLAYING);
+  window.dispatchEvent(new KeyboardEvent('keydown', {key:'d',code:'KeyD',bubbles:true,cancelable:true}));
+  await delay(100);
+  await check('keyboard input reaches game update', () => sawPressed && sawMove);
+  await check('one-frame input clears automatically', () => !input.pressed('d'));
+  window.dispatchEvent(new KeyboardEvent('keyup', {key:'d',code:'KeyD',bubbles:true}));
+  window.dispatchEvent(new KeyboardEvent('keydown', {key:'ش',code:'KeyA',bubbles:true,cancelable:true}));
+  await check('Arabic keyboard layout control works', () => input.vector().x < 0);
+  window.dispatchEvent(new KeyboardEvent('keyup', {key:'ش',code:'KeyA',bubbles:true}));
+  await check('releasing key removes the held direction', () => input.vector().x === 0);
+
+  const beforeRestartCall = updates;
+  engine.start(); await delay(120);
+  const loopGrowth = updates - beforeRestartCall;
+  await check('start does not create a duplicate RAF loop', () => loopGrowth >= 2 && loopGrowth < 20);
+  engine.pause(); const pausedAt = updates; await delay(100);
+  await check('pause stops game updates', () => engine.state === GAME_STATES.PAUSED && updates === pausedAt);
+  engine.resume(); await delay(80);
+  await check('resume restarts game updates', () => engine.state === GAME_STATES.PLAYING && updates > pausedAt);
+  engine.restart();
+  await check('restart returns to START cleanly', () => engine.state === GAME_STATES.START && engine.score === 0 && engine.lives === 2);
+  engine.start(); engine.addScore(37);
+  await check('score and best score update', () => engine.score === 37 && engine.bestScore >= 37);
+  engine.win(); await check('win state transition', () => engine.state === GAME_STATES.WON);
+  engine.restart(); engine.start(); engine.setLives(1); engine.loseLife();
+  await check('last life triggers GAME_OVER', () => engine.state === GAME_STATES.GAME_OVER && engine.lives === 0);
+  engine.restart(); engine.start(); engine.timeLeft = .001; await delay(100);
+  await check('timer expiry ends the game without another update', () => engine.state === GAME_STATES.GAME_OVER);
+
+  await check('rectangle collision works', () => hit({x:0,y:0,w:10,h:10},{x:5,y:5,w:10,h:10}));
+  await check('circle collision works', () => circle({x:0,y:0,r:5},{x:7,y:0,r:3}));
+  await check('point-in-rectangle works', () => pointInRect({x:5,y:5},{x:0,y:0,w:10,h:10}));
+  await check('AABB detects overlap', () => aabbOverlap({x:0,y:0,w:10,h:10},{x:5,y:5,w:10,h:10}));
+  await check('extreme-speed body cannot tunnel through thin wall', () => {
+    const body = new Body2D({x:0,y:0,w:10,h:10,gravity:0}); body.vx = 1_000_000;
+    const wall = {x:50,y:0,w:1,h:40}; const contacts = moveAndCollide(body,[wall],.05);
+    return contacts > 0 && body.right <= wall.x + .001;
+  });
+  await check('extreme-speed falling body cannot tunnel through floor', () => {
+    const body = new Body2D({x:0,y:0,w:10,h:10,gravity:0}); body.vy = 1_000_000;
+    const floor = {x:-20,y:50,w:80,h:1}; const contacts = moveAndCollide(body,[floor],.05);
+    return contacts > 0 && body.bottom <= floor.y + .001;
+  });
+  await check('grounded state remains stable while standing still', () => {
+    const body = new Body2D({x:0,y:40,w:10,h:10,gravity:0}); const floor = {x:-20,y:50,w:80,h:10};
+    moveAndCollide(body,[floor],.016); const first = body.onGround; moveAndCollide(body,[floor],.016); return first && body.onGround;
+  });
+  await check('save store persists a value in this browser', () => {
+    const key = `browser-smoke-${Date.now()}`; const one = new SaveStore(key); one.set('probe', 19);
+    const two = new SaveStore(key); const ok = two.get('probe') === 19;
+    try { localStorage.removeItem(`2d-games:${key}`); } catch {}
+    if (!ok) throw new Error('Saved value was not readable from a new SaveStore instance'); return true;
+  });
+  await check('particles can be created and updated', () => {
+    const fx = new Particles(); fx.burst(40,50,8,{color:'#fff'}); fx.update(.016); return true;
+  });
+  await check('audio manager supports mute toggle', () => { const audio = new AudioManager(); const before = audio.enabled; audio.toggle(); const changed = audio.enabled !== before; audio.toggle(); return changed; });
+  const oldWidth = canvas.width;
+  engine.resize();
+  await check('canvas resize retains a positive logical scale', () => engine.scale > 0 && engine.viewportW > 0 && engine.viewportH > 0);
+  await check('canvas backing resolution is initialized', () => canvas.width > 0 && canvas.height > 0 && oldWidth > 0);
+  const savedRect = canvas.getBoundingClientRect.bind(canvas);
+  canvas.getBoundingClientRect = () => ({left:0,top:0,width:280,height:157.5,right:280,bottom:157.5});
+  engine.resize();
+  await check('narrow mobile viewport uses actual CSS size', () => Math.abs(engine.viewportW - 280) < .01 && Math.abs(engine.viewportH - 157.5) < .01 && input.viewport.scale > 0);
+  canvas.getBoundingClientRect = savedRect; engine.resize();
+
+  engine.destroy(); input.destroy();
+  window.__BROWSER_SMOKE__ = {ok:results.every(r=>r.pass), results};
+} catch (error) {
+  results.push({name:'Browser test harness startup',pass:false,detail:error?.stack||String(error)});
+  show(); window.__BROWSER_SMOKE__ = {ok:false,results};
+  try { engine?.destroy(); input?.destroy(); } catch {}
+}
+</script>
+</body></html>

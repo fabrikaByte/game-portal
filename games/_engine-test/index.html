@@ -1,1 +1,39 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Engine Test Lab — 2D Games</title><link rel="stylesheet" href="../../ui/game-shell.css"><link rel="stylesheet" href="style.css"></head><body data-game="_engine-test"><main id="game-root"></main><script type="module" src="game.js"></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Engine Test Lab — 2D Games</title>
+  <link rel="stylesheet" href="../../ui/game-shell.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .engine-load-status{max-width:900px;margin:22px auto;padding:18px;border:1px solid #31516b;border-radius:14px;background:#081827;color:#e7f4ff;font:14px/1.7 system-ui;overflow-wrap:anywhere}
+    .engine-load-status pre{white-space:pre-wrap;direction:ltr;text-align:left;max-height:40vh;overflow:auto}
+  </style>
+</head>
+<body data-game="_engine-test">
+  <main id="game-root"><section class="engine-load-status" id="engine-load-status" role="status">جاري تحميل اختبار المحرك… إذا لم يبدأ، ستظهر هنا تفاصيل المشكلة بدل صفحة فارغة.</section></main>
+  <script>
+    (() => {
+      const root = document.getElementById('game-root');
+      const fallback = (title, detail) => {
+        if (window.__ENGINE_TEST_READY__ || window.__ENGINE_TEST_FAILED__) return;
+        window.__ENGINE_TEST_FAILED__ = true;
+        const box = document.createElement('section');
+        box.className = 'engine-load-status';
+        box.setAttribute('role', 'alert');
+        const h = document.createElement('h2'); h.textContent = title;
+        const p = document.createElement('p'); p.textContent = detail;
+        box.append(h, p); root.replaceChildren(box);
+      };
+      window.addEventListener('error', event => {
+        if (event.target && event.target.tagName === 'SCRIPT') fallback('تعذر تحميل ملف اختبار المحرك', event.target.src || 'module script failed');
+        else if (event.message) fallback('حدث خطأ أثناء تشغيل الاختبار', event.message + (event.filename ? ` — ${event.filename}:${event.lineno || 0}` : ''));
+      }, true);
+      window.addEventListener('unhandledrejection', event => fallback('فشل تحميل مكوّن من المحرك', event.reason?.stack || event.reason?.message || String(event.reason)));
+      window.setTimeout(() => fallback('اختبار المحرك لم يبدأ', 'لم تصل الصفحة إلى مرحلة التشغيل خلال 5 ثوانٍ. تحقق من تحميل ملفات JavaScript وعمليات الاستيراد.'), 5000);
+    })();
+  </script>
+  <script id="engine-test-module" type="module" src="game.js"></script>
+</body>
+</html>

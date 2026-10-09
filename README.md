@@ -11,11 +11,14 @@ The project currently contains the engine foundation and an internal Engine Test
 
 ## Engine score
 
-Current foundation readiness: **86 / 100**.
+The prior 86/100 rating is provisional and not considered validated until the deployed browser tests pass.
 
 ## Required gate before game development
 
 1. Deploy this build.
-2. Open `/games/_engine-test/` and run the interactive checks.
-3. Open `/tests/browser-smoke/` and confirm every line reports PASS.
-4. Only then start the first real game.
+2. Open `/tests/browser-smoke/` and confirm every check reports PASS.
+3. Open `/games/_engine-test/` and test Start, movement, Pause/Resume, Restart, score/lives, mouse and audio.
+4. If a browser check fails, save the detailed error from the page and fix it before creating a game.
+5. Only then start the first real game.
+
+Run automated source checks locally with `node tests/run-all.mjs`. See `TESTING_AND_FIXES.md` for the recent fixes and known browser-testing limitation.

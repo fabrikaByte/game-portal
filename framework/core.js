@@ -13,9 +13,20 @@ export class GameEngine{
     this._resize=()=>this.resize(); window.addEventListener('resize',this._resize,{passive:true}); this.resize();
   }
   resize(){
-    const r=this.canvas.getBoundingClientRect(); const w=Math.max(320,r.width||this.config.width); const h=Math.max(180,r.height||w*9/16);
-    const d=Math.min(window.devicePixelRatio||1,2); this.canvas.width=Math.round(w*d); this.canvas.height=Math.round(h*d);
-    this.viewportW=w; this.viewportH=h; this.input?.setLogicalSize?.(this.config.width,this.config.height); this.scale=Math.min(w/this.config.width,h/this.config.height); this.offsetX=(w-this.config.width*this.scale)/2; this.offsetY=(h-this.config.height*this.scale)/2; this.input?.setViewport?.({scale:this.scale,offsetX:this.offsetX,offsetY:this.offsetY}); this.hooks.resize?.(w,h,this);
+    const r=this.canvas.getBoundingClientRect();
+    // Use the actual CSS viewport, including narrow mobile sizes. Clamping this to
+    // 320x180 made pointer coordinates disagree with what the player saw.
+    const width=Number(r.width)||this.config.width;
+    const height=Number(r.height)||width*(this.config.height/this.config.width);
+    const w=Math.max(1,width), h=Math.max(1,height);
+    const d=Math.min(window.devicePixelRatio||1,2);
+    this.canvas.width=Math.max(1,Math.round(w*d)); this.canvas.height=Math.max(1,Math.round(h*d));
+    this.viewportW=w; this.viewportH=h;
+    this.input?.setLogicalSize?.(this.config.width,this.config.height);
+    this.scale=Math.min(w/this.config.width,h/this.config.height);
+    this.offsetX=(w-this.config.width*this.scale)/2; this.offsetY=(h-this.config.height*this.scale)/2;
+    this.input?.setViewport?.({scale:this.scale,offsetX:this.offsetX,offsetY:this.offsetY});
+    this.hooks.resize?.(w,h,this);
   }
   reset(){this.score=0;this.lives=Math.max(0,Math.floor(this.config.lives));this.level=1;this.elapsed=0;this.timeLeft=this.config.timer||0;this.input?.clear();this.particles?.clear();this.shake?.clear();this.hooks.reset?.(this);this.events?.emit('reset',this);}
   start(){if(this.state===GAME_STATES.PAUSED){this.resume();return}if(this.state===GAME_STATES.PLAYING)return;this.reset();this.state=GAME_STATES.PLAYING;this.events?.emit('start',this);this.lastTime=performance.now();this.audio?.unlock();this.hooks.start?.(this);if(!this.loopStarted)this.loop(this.lastTime)}
