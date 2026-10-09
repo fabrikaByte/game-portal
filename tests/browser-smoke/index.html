@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Engine Browser Smoke</title><style>body{font-family:system-ui;background:#06111f;color:#fff;padding:20px}#out{white-space:pre-wrap}.pass{color:#4ade80}.fail{color:#f87171}canvas{width:640px;height:360px;display:block;border:1px solid #315}</style></head><body><h1>Engine Browser Smoke</h1><div id="out">RUNNING…</div><canvas id="c"></canvas><script type="module">
+import {GameEngine,GAME_STATES} from '../../framework/core.js';
+import {Input} from '../../framework/input.js';
+import {Body2D,moveAndCollide} from '../../framework/physics-2d.js';
+const out=document.getElementById('out'); const results=[];
+function ok(name,cond){results.push({name,pass:!!cond});if(!cond)throw new Error(name)}
+try{
+ const input=new Input();const canvas=document.getElementById('c');input.attach(canvas);input.setLogicalSize(960,540);input.setViewport({scale:1,offsetX:0,offsetY:0});
+ canvas.getBoundingClientRect=()=>({left:0,top:0,width:640,height:360,right:640,bottom:360});
+ canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:320,clientY:180,bubbles:true,pointerType:'mouse',button:0,pointerId:1}));
+ ok('pointer maps to logical coordinates',Math.abs(input.pointer.x-480)<0.01&&Math.abs(input.pointer.y-270)<0.01);
+ input.clear();
+ let seenPressed=false,updates=0;
+ const engine=new GameEngine({canvas,input,config:{width:960,height:540,lives:2},hooks:{update(){updates++;seenPressed ||= input.pressed('d')}}});
+ input._kd(new KeyboardEvent('keydown',{key:'d',code:'KeyD',bubbles:true,cancelable:true}));
+ engine.start();
+ await new Promise(r=>setTimeout(r,120));
+ ok('engine reaches PLAYING',engine.state===GAME_STATES.PLAYING);
+ ok('input.pressed visible during update',seenPressed);
+ ok('input.just clears automatically each frame',!input.pressed('d'));
+ const before=updates;engine.start();await new Promise(r=>setTimeout(r,120));const growth=updates-before;ok('start does not create duplicate RAF loops',growth>2&&growth<30);
+ const body=new Body2D({x:0,y:0,w:10,h:10,gravity:0});body.vx=10000;const wall={x:50,y:0,w:10,h:50};const contacts=moveAndCollide(body,[wall],0.05);ok('high-speed body does not tunnel through thin wall',body.right<=wall.x+0.001&&contacts>0);
+ engine.destroy();input.destroy();
+ out.className='pass';out.textContent=results.map(r=>(r.pass?'PASS':'FAIL')+' — '+r.name).join('\n');window.__BROWSER_SMOKE__={ok:true,results};
+}catch(e){out.className='fail';out.textContent='FAIL — '+e.stack;window.__BROWSER_SMOKE__={ok:false,error:String(e),results};}
+</script></body></html>

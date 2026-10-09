@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { GameEngine, GAME_STATES, clamp } from '../framework/core.js';
 import { Input } from '../framework/input.js';
 import { hit, circle, pointInRect } from '../framework/collision.js';
+import { Body2D, moveAndCollide } from '../framework/physics-2d.js';
 
 const listeners = new Map();
 globalThis.window = { devicePixelRatio:1, addEventListener:(k,f)=>listeners.set(k,f), removeEventListener:(k,f)=>listeners.delete(k) };
 globalThis.document = { hidden:false, addEventListener:()=>{} };
 globalThis.performance = { now:()=>1000 };
-globalThis.requestAnimationFrame = ()=>1;
+let rafCalls=0; globalThis.requestAnimationFrame = ()=>{rafCalls++;return rafCalls};
 globalThis.cancelAnimationFrame = ()=>{};
 
 const ctx = { setTransform(){}, fillRect(){}, save(){}, restore(){}, translate(){}, scale(){} };
@@ -29,5 +30,7 @@ const input = new Input();
 input.keys.add('arrowleft'); input.keys.add('s');
 const v=input.vector(); assert.ok(Math.abs(v.x+Math.SQRT1_2)<1e-12); assert.ok(Math.abs(v.y-Math.SQRT1_2)<1e-12);
 input.clear(); assert.equal(input.vector().x,0); assert.equal(input.vector().y,0);
+const fastBody=new Body2D({x:0,y:0,w:10,h:10,gravity:0});fastBody.vx=10000;const thinWall={x:50,y:0,w:10,h:50};const contacts=moveAndCollide(fastBody,[thinWall],0.05);assert.ok(contacts>0&&fastBody.right<=thinWall.x+1e-9);
+input.setLogicalSize(1920,1080);input.setViewport({scale:2,offsetX:10,offsetY:20});assert.equal(input.logicalWidth,1920);assert.equal(input.logicalHeight,1080);assert.deepEqual(input.viewport,{scale:2,offsetX:10,offsetY:20});
 input.destroy(); e.destroy();
 console.log('ENGINE_CORE_TESTS=PASS');
